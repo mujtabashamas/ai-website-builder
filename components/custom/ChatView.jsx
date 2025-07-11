@@ -136,7 +136,7 @@ function ChatView() {
                 console.error('Error updating workspace messages:', e);
             }
         }
-    }, [status, result, error, id, messages, UpdateMessages]);
+    }, [status, result, error, id, UpdateMessages]);
 
     // Submit user prompt and add user message
     const onGenerate = (input) => {
