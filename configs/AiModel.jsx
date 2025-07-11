@@ -15,7 +15,7 @@ const generationConfig = {
 
 // Configuration for code generation
 const CodeGenerationConfig = {
-    temperature: 1,
+    temperature: 0.8, // Slightly lower temperature for more focused outputs
     top_p: 0.95,
     max_tokens: 10192,
     response_format: { type: "json_object" }
@@ -99,11 +99,11 @@ export const chatSession = new ChatSession(generationConfig);
 export const GenAiCode = new ChatSession(CodeGenerationConfig, [
     {
         role: "system",
-        content: "You are an expert React developer. Generate code based on the user's request in proper JSON format."
+        content: "You are an expert React developer with advanced Tailwind CSS skills. Generate code based on the user's request in proper JSON format. Follow these guidelines for all UI components:\n\n1. Use sophisticated Tailwind CSS designs with advanced utility classes\n2. Implement responsive designs that work on mobile, tablet, and desktop\n3. Use gradients, shadows, animations, and transitions for visual appeal\n4. Include hover/focus states and interactive elements\n5. Use modern UI patterns like cards, modals, dropdowns when appropriate\n6. Implement proper spacing, typography hierarchy, and color theory\n7. Use Tailwind's dark mode utilities when appropriate\n8. Incorporate micro-interactions and subtle animations\n9. Use container queries and modern layout techniques\n10. Ensure accessibility with proper ARIA attributes and keyboard navigation"
     },
     {
         role: "user",
-        content: "create a to do app: Generate a Project in React. Create multiple components, organizing them in a folder structure.\n\n    Return the response in JSON format with the following schema:\n    {\n      \"projectTitle\": \"\",\n      \"explanation\": \"\",\n      \"files\": {\n        \"/App.js\": {\n          \"code\": \"\"\n        },\n        ...\n      },\n      \"generatedFiles\": []\n    }\n\n    Here's the reformatted and improved version of your prompt:\n\n    Generate a programming code structure for a React project using Vite.\n    Do not create a App.jsx file. There is a App.js file in the project structure, rewrite it.\n    Use Tailwind css for styling.\n\n    Return the response in JSON format with the following schema:\n\n    {\n      \"projectTitle\": \"\",\n      \"explanation\": \"\",\n      \"files\": {\n        \"/App.js\": {\n          \"code\": \"\"\n        },\n        ...\n      },\n      \"generatedFiles\": []\n    }\n\n    Ensure the files field contains all the created files, and the generatedFiles field contains the list of generated files:{\n    \"/App.js\": {\n      \"code\": \"import React from 'react';\\n\\nfunction App() {\\n  return (\\n    <div>\\n      <h1>Hello World</h1>\\n    </div>\\n  );\\n}\\n\\nexport default App;\\n\"\n    }\n    }\n    \n\n    Additionally, include an explanation of the project's structure, purpose, and additional instructions:\n    - For placeholder images, please use https://archive.org/download/\n    - Add Emoji icons whenever needed to give a good user experience\n    - The lucide-react library is also available to be imported IF NECESSARY."
+        content: "Create a modern, visually stunning to-do app: Generate a Project in React with sophisticated UI. Create multiple components, organizing them in a folder structure.\n\n    Return the response in JSON format with the following schema:\n    {\n      \"projectTitle\": \"\",\n      \"explanation\": \"\",\n      \"files\": {\n        \"/App.js\": {\n          \"code\": \"\"\n        },\n        ...\n      },\n      \"generatedFiles\": []\n    }\n\n    Generate a programming code structure for a React project using Vite.\n    Do not create a App.jsx file. There is a App.js file in the project structure, rewrite it.\n    Use Tailwind CSS for styling with these advanced requirements:\n\n    1. Create a visually stunning UI with gradient backgrounds, shadows, and animations\n    2. Implement responsive design that works on mobile, tablet, and desktop\n    3. Use advanced Tailwind features like group-hover, dark mode, and custom animations\n    4. Add micro-interactions for better user experience (hover effects, transitions, etc.)\n    5. Implement a modern card-based design with proper spacing and typography\n    6. Use a sophisticated color palette with proper contrast and visual hierarchy\n    7. Add loading states and transitions between UI states\n    8. Implement proper form validation with visual feedback\n    9. Use container queries and modern layout techniques\n    10. Ensure accessibility with proper ARIA attributes\n\n    Return the response in JSON format with the following schema:\n\n    {\n      \"projectTitle\": \"\",\n      \"explanation\": \"\",\n      \"files\": {\n        \"/App.js\": {\n          \"code\": \"\"\n        },\n        ...\n      },\n      \"generatedFiles\": []\n    }\n\n    Ensure the files field contains all the created files, and the generatedFiles field contains the list of generated files.\n    \n    Additionally, include an explanation of the project's structure, purpose, and additional instructions:\n    - For placeholder images, please use https://archive.org/download/\n    - Add Emoji icons whenever needed to give a good user experience\n    - The lucide-react library is also available to be imported for modern icons and UI elements\n    - Include a theme switcher for light/dark mode if appropriate"
     },
     {
         role: "assistant",
@@ -115,7 +115,7 @@ export const GenAiCode = new ChatSession(CodeGenerationConfig, [
 export const enhancePromptSession = new ChatSession(EnhancePromptConfig, [
     {
         role: "system",
-        content: "You are an expert at enhancing user prompts to generate better results. Format your responses as JSON."
+        content: "You are an expert at enhancing user prompts to generate better results. Format your responses as JSON. When enhancing prompts for UI generation, emphasize the need for sophisticated Tailwind CSS designs with animations, gradients, responsive layouts, and modern UI patterns. Encourage the use of advanced Tailwind features like group-hover, dark mode, and custom animations."
     }
 ]);
 
