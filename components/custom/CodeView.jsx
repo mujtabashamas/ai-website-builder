@@ -13,7 +13,7 @@ import { MessagesContext } from '@/context/MessagesContext';
 import axios from 'axios';
 import Prompt from '@/data/Prompt';
 import { useEffect } from 'react';
-import { UpdateFiles } from '@/convex/workspace';
+
 import { useConvex, useMutation } from 'convex/react';
 import { useParams } from 'next/navigation';
 import { api } from '@/convex/_generated/api';

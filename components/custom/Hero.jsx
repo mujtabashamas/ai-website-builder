@@ -18,12 +18,26 @@ function Hero() {
         const msg = {
             role: 'user',
             content: input
-        }
-        setMessages(msg);
+        };
+        setMessages([msg]);
+        // 1. Create the workspace (if needed)
         const workspaceID = await CreateWorkspace({
             messages: [msg]
         });
-        router.push('/workspace/' + workspaceID);
+        // 2. Create the OpenAI job for this prompt
+        const resp = await fetch('/api/gen-ai-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: input }),
+        });
+        const data = await resp.json();
+        // 3. Navigate to workspace page with jobId as query param
+        if (data.jobId) {
+            router.push(`/workspace/${workspaceID}?jobId=${data.jobId}`);
+        } else {
+            // fallback: just go to workspace if job creation fails
+            router.push(`/workspace/${workspaceID}`);
+        }
     }
 
     const enhancePrompt = async () => {

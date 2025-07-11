@@ -10,11 +10,12 @@ import Prompt from '@/data/Prompt';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 
-function ChatView({ jobId, onPrompt, loading }) {
+function ChatView({ initialJobId, onPrompt, loading }) {
     const { id } = useParams();
     const convex = useConvex();
     const { messages, setMessages } = useContext(MessagesContext);
     const [userInput, setUserInput] = useState();
+    const [jobId, setJobId] = useState(initialJobId || null);
     const UpdateMessages = useMutation(api.workspace.UpdateWorkspace);
 
     useEffect(() => {
@@ -32,14 +33,11 @@ function ChatView({ jobId, onPrompt, loading }) {
     // Poll for AI job result when jobId changes
     useEffect(() => {
         if (!jobId) return;
-        console.log('Job ID changed:', jobId);
-        
         let cancelled = false;
         const poll = async () => {
             let status = 'pending';
             let result = null;
             while (status === 'pending') {
-                console.log('polling job status...');
                 await new Promise(res => setTimeout(res, 3000));
                 try {
                     const statusResp = await axios.get('/api/gen-ai-code/status', { params: { id: jobId } });
@@ -48,14 +46,11 @@ function ChatView({ jobId, onPrompt, loading }) {
                         result = statusResp.data.result;
                     }
                 } catch (e) {
-                    console.error('Error polling job status:', e);
                     status = 'done';
                     result = { error: e?.response?.data?.error || e.message };
                 }
                 if (cancelled) return;
             }
-            
-            console.log('Job completed with result:', result);
             const aiResp = {
                 role: 'ai',
                 content: result
@@ -66,11 +61,15 @@ function ChatView({ jobId, onPrompt, loading }) {
                 workspaceId: id
             });
         };
-        
         poll();
         return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [jobId]);
+
+    // When initialJobId changes (first page load), set jobId
+    useEffect(() => {
+        if (initialJobId) setJobId(initialJobId);
+    }, [initialJobId]);
 
     // Only submit user prompt and add user message
     const onGenerate = (input) => {
@@ -81,7 +80,10 @@ function ChatView({ jobId, onPrompt, loading }) {
         setUserInput('');
         if (onPrompt) {
             const prompt = JSON.stringify([...messages, { role: 'user', content: input }]) + Prompt.CHAT_PROMPT;
-            onPrompt(prompt);
+            // Wrap onPrompt to set jobId when new job is created
+            onPrompt(prompt, (newJobId) => {
+                if (newJobId) setJobId(newJobId);
+            });
         }
     }
 

@@ -1,27 +1,12 @@
 "use client"
 import ChatView from '@/components/custom/ChatView';
 import CodeView from '@/components/custom/CodeView';
-import React, { useState } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const Workspace = () => {
-    const [jobId, setJobId] = useState(null);
-    const [loading, setLoading] = useState(false);
-
-    // Handler to create a new AI job and set jobId
-    const handleGenAiJob = async (prompt) => {
-        setLoading(true);
-        try {
-            const resp = await axios.post('/api/gen-ai-code', { prompt });
-            console.log(resp.data);
-            setJobId(resp.data.jobId);
-        } catch (err) {
-            // Optionally handle error
-            console.log(err);
-            setJobId(null);
-        }
-        setLoading(false);
-    };
+    const searchParams = useSearchParams();
+    const initialJobId = searchParams.get('jobId');
 
     return (
         <div className="min-h-screen bg-gray-950 relative overflow-hidden">
@@ -33,9 +18,9 @@ const Workspace = () => {
             {/* Content */}
             <div className='relative z-10 p-10'>
                 <div className='grid grid-cols-1 md:grid-cols-4 gap-10'>
-                    <ChatView jobId={jobId} onPrompt={handleGenAiJob} loading={loading} />
+                    <ChatView initialJobId={initialJobId} loading={!initialJobId} />
                     <div className='col-span-3'>
-                        <CodeView jobId={jobId} loading={loading} />
+                        <CodeView initialJobId={initialJobId} loading={!initialJobId} />
                     </div>
                 </div>
             </div>
