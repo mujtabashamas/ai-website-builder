@@ -9,14 +9,18 @@ import { useMutation } from 'convex/react';
 import Prompt from '@/data/Prompt';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
+import { useJob } from '@/context/JobContext';
 
-function ChatView({ initialJobId, onPrompt, loading }) {
+function ChatView() {
     const { id } = useParams();
     const convex = useConvex();
     const { messages, setMessages } = useContext(MessagesContext);
     const [userInput, setUserInput] = useState();
-    const [jobId, setJobId] = useState(initialJobId || null);
+    const [loading, setLoading] = useState(false);
     const UpdateMessages = useMutation(api.workspace.UpdateWorkspace);
+    
+    // Use the shared job context
+    const { jobId, status, result, error, isPolling, createJob } = useJob();
 
     useEffect(() => {
         id && GetWorkSpaceData();
@@ -29,62 +33,129 @@ function ChatView({ initialJobId, onPrompt, loading }) {
         setMessages(result?.messages);
         console.log(result);
     };
-
-    // Poll for AI job result when jobId changes
+    
+    // Handle direct AI chat responses (not through job polling)
     useEffect(() => {
-        if (!jobId) return;
-        let cancelled = false;
-        const poll = async () => {
-            let status = 'pending';
-            let result = null;
-            while (status === 'pending') {
-                await new Promise(res => setTimeout(res, 3000));
-                try {
-                    const statusResp = await axios.get('/api/gen-ai-code/status', { params: { id: jobId } });
-                    status = statusResp.data.status;
-                    if (status === 'done') {
-                        result = statusResp.data.result;
-                    }
-                } catch (e) {
-                    status = 'done';
-                    result = { error: e?.response?.data?.error || e.message };
-                }
-                if (cancelled) return;
+        if (messages?.length > 0 && !jobId && !isPolling) {
+            const role = messages[messages?.length - 1].role;
+            if (role === 'user') {
+                GetAiResponse();
             }
+        }
+    }, [messages, jobId, isPolling]);
+    
+    const GetAiResponse = async () => {
+        setLoading(true);
+        const PROMPT = JSON.stringify(messages) + Prompt.CHAT_PROMPT;
+        try {
+            const result = await axios.post('/api/ai-chat', {
+                prompt: PROMPT
+            });
+
             const aiResp = {
                 role: 'ai',
-                content: result
+                content: result.data.result
             };
+            
             setMessages(prev => [...prev, aiResp]);
+            const currentMessages = Array.isArray(messages) ? messages : [];
+            
             await UpdateMessages({
-                messages: [...messages, aiResp],
+                messages: [...currentMessages, aiResp],
                 workspaceId: id
             });
-        };
-        poll();
-        return () => { cancelled = true; };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [jobId]);
+        } catch (error) {
+            console.error('Error getting AI response:', error);
+            const errorResp = {
+                role: 'ai',
+                content: `Error: ${error.message || 'Failed to get response'}`
+            };
+            setMessages(prev => [...prev, errorResp]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    // When initialJobId changes (first page load), set jobId
+    // Process job result when status changes to 'done' or 'error'
     useEffect(() => {
-        if (initialJobId) setJobId(initialJobId);
-    }, [initialJobId]);
+        if (status === 'done' && result) {
+            console.log('ChatView: Job completed with result:', result);
+            let content = '';
 
-    // Only submit user prompt and add user message
+            if (typeof result === 'string') {
+                content = result;
+            } else if (result.error) {
+                content = `Error: ${result.error}`;
+            } else if (typeof result === 'object') {
+                try {
+                    // For code generation, we want to show the explanation in chat
+                    if (result.explanation) {
+                        content = result.explanation;
+                    } else if (result.files) {
+                        content = `Generated ${Object.keys(result.files).length} files successfully.`;
+                    } else {
+                        content = JSON.stringify(result, null, 2);
+                    }
+                } catch (e) {
+                    content = 'Error parsing result';
+                }
+            }
+
+            const aiResp = {
+                role: 'ai',
+                content: content
+            };
+
+            setMessages(prev => [...prev, aiResp]);
+            try {
+                // Get the current messages from state to ensure we have the latest
+                const currentMessages = Array.isArray(messages) ? messages : [];
+                
+                UpdateMessages({
+                    messages: [...currentMessages, aiResp],
+                    workspaceId: id
+                });
+            } catch (e) {
+                console.error('Error updating workspace messages:', e);
+            }
+        } else if (status === 'error' && error) {
+            console.error('ChatView: Job error:', error);
+            const errorResp = {
+                role: 'ai',
+                content: `Error: ${error}`
+            };
+            
+            setMessages(prev => [...prev, errorResp]);
+            try {
+                const currentMessages = Array.isArray(messages) ? messages : [];
+                UpdateMessages({
+                    messages: [...currentMessages, errorResp],
+                    workspaceId: id
+                });
+            } catch (e) {
+                console.error('Error updating workspace messages:', e);
+            }
+        }
+    }, [status, result, error, id, messages, UpdateMessages]);
+
+    // Submit user prompt and add user message
     const onGenerate = (input) => {
-        setMessages(prev => [...prev, {
+        // Add user message to chat
+        const userMessage = {
             role: 'user',
             content: input
-        }]);
+        };
+        
+        // Get current messages safely
+        const currentMessages = Array.isArray(messages) ? messages : [];
+        const updatedMessages = [...currentMessages, userMessage];
+        
+        setMessages(updatedMessages);
         setUserInput('');
-        if (onPrompt) {
-            const prompt = JSON.stringify([...messages, { role: 'user', content: input }]) + Prompt.CHAT_PROMPT;
-            // Wrap onPrompt to set jobId when new job is created
-            onPrompt(prompt, (newJobId) => {
-                if (newJobId) setJobId(newJobId);
-            });
-        }
+        
+        // For code generation, create a job
+        const prompt = JSON.stringify(updatedMessages) + Prompt.CHAT_PROMPT;
+        createJob(prompt);
     }
 
     return (
@@ -114,7 +185,7 @@ function ChatView({ initialJobId, onPrompt, loading }) {
                         </div>
                     ))}
 
-                    {loading && (
+                    {(loading || isPolling || status === 'pending') && (
                         <div className="p-4 rounded-lg bg-gray-800/30 border border-gray-700">
                             <div className="flex items-center gap-3 text-gray-400">
                                 <Loader2Icon className="animate-spin h-5 w-5" />
