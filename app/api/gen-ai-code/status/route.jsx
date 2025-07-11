@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getJob } from "../jobStore";
+import mongoConnect from '@/lib/mongoConnect';
+import Job from '@/models/Job';
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
@@ -10,7 +11,8 @@ export async function GET(req) {
     return NextResponse.json({ error: "Missing job id" }, { status: 400 });
   }
   
-  const job = getJob(id);
+  await mongoConnect();
+  const job = await Job.findById(id);
   if (!job) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
   }
