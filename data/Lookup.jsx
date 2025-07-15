@@ -1,6 +1,6 @@
 export default {
   SUGGSTIONS: [
-    'Create a landing page for web3 domain server provider, use color purple, pink and black make it gradient if possible, make upto 5 sections',
+    'Create a landing page for web3 domain server provider',
     'Create Todo App',
     'Create a Budget Track App',
     'Create a Login and Signup page',

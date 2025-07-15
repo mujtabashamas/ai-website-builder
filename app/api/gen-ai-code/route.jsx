@@ -14,7 +14,11 @@ export async function POST(req) {
   (async () => {
     try {
       const result = await GenAiCode.sendMessage(prompt);
-      const responseText = result.response.text();
+      console.log(result);
+
+      let responseText = result.response.raw.choices[0].message.content;
+
+      console.log(responseText);
 
       // Handle potential JSON parsing issues
       let parsedResult;
@@ -27,10 +31,10 @@ export async function POST(req) {
           try {
             parsedResult = JSON.parse(jsonMatch[1].trim());
           } catch (extractError) {
-            throw new Error(`Could not parse JSON response: ${responseText.substring(0, 100)}...`);
+            console.log(extractError);
           }
         } else {
-          throw new Error(`Could not extract JSON from response: ${responseText.substring(0, 100)}...`);
+          console.log("Could not extract JSON from response");
         }
       }
       await Job.findByIdAndUpdate(jobId, {

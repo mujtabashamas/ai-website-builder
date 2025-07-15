@@ -1,4 +1,5 @@
 // Import required libraries
+import axios from 'axios';
 import { createParser } from 'eventsource-parser';
 
 // Configuration for general chat
@@ -32,7 +33,7 @@ class ChatSession {
     constructor(config, history = []) {
         this.config = config;
         this.history = history;
-        this.apiKey = process.env.V0_API_KEY || ''; // API key should be set in environment variables
+        this.apiKey = process.env.V0_API_KEY || 'v1:JrFXTArn07QTGAcIWTyDAIko:Rj1kTPLLjeyPRy97IgdV5HGo'; // API key should be set in environment variables
         this.apiUrl = 'https://api.v0.dev/v1/chat/completions';
     }
 
@@ -40,13 +41,13 @@ class ChatSession {
         try {
             // Prepare messages array for the API request
             let messages = [...this.history];
-            
+
             // Add the user message to history and messages array
             const userMessage = {
                 role: "user",
                 content: message
             };
-            
+
             this.history.push(userMessage);
             messages.push(userMessage);
 
@@ -59,45 +60,38 @@ class ChatSession {
                 max_tokens: this.config.max_tokens,
                 stream: options.stream || false
             };
-            
+
             // Add response format if specified
             if (this.config.response_format) {
                 payload.response_format = this.config.response_format;
             }
-            
+
             // Add tools if provided
             if (options.tools) {
                 payload.tools = options.tools;
             }
-            
+
             // Add tool_choice if provided
             if (options.tool_choice) {
                 payload.tool_choice = options.tool_choice;
             }
 
-            // Make the API request
-            const response = await fetch(this.apiUrl, {
-                method: 'POST',
+            // Make the API request using axios
+            const response = await axios.post(this.apiUrl, payload, {
                 headers: {
                     'Authorization': `Bearer ${this.apiKey}`,
                     'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                }
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`API request failed: ${response.status} ${JSON.stringify(errorData)}`);
-            }
 
             // Handle streaming response
             if (options.stream) {
-                return this._handleStreamingResponse(response);
+                // For streaming, use the streamMessage method
+                return await this.streamMessage(message, options);
             }
 
-            // Handle regular response
-            const data = await response.json();
-            
+            const data = response.data;
+
             // Add the assistant's response to history
             if (data.choices && data.choices[0] && data.choices[0].message) {
                 this.history.push(data.choices[0].message);
@@ -116,52 +110,77 @@ class ChatSession {
         }
     }
 
-    // Helper method to handle streaming response
-    async _handleStreamingResponse(response) {
+    /**
+     * Stream a chat completion response from the v0 API.
+     * @param {string|object} message - The user message (string or multimodal array)
+     * @param {object} options - Optional: tools, tool_choice, and other API options
+     * @returns {Promise<Response>} - A Response object with a ReadableStream of the streamed content
+     */
+    async streamMessage(message, options = {}) {
+        // Prepare messages array for the API request
+        let messages = [...this.history];
+        const userMessage = {
+            role: "user",
+            content: message
+        };
+        this.history.push(userMessage);
+        messages.push(userMessage);
+        // Prepare the request payload
+        const payload = {
+            model: this.config.model,
+            messages: messages,
+            temperature: this.config.temperature,
+            top_p: this.config.top_p,
+            max_tokens: this.config.max_tokens,
+            stream: true // Always stream
+        };
+        if (this.config.response_format) {
+            payload.response_format = this.config.response_format;
+        }
+        if (options.tools) {
+            payload.tools = options.tools;
+        }
+        if (options.tool_choice) {
+            payload.tool_choice = options.tool_choice;
+        }
+        // Make the API request using axios with responseType: 'stream'
+        const response = await axios({
+            method: 'post',
+            url: this.apiUrl,
+            data: payload,
+            headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            responseType: 'stream'
+        });
         const encoder = new TextEncoder();
-        const decoder = new TextDecoder();
-        let counter = 0;
         const stream = new ReadableStream({
             async start(controller) {
-                // Function to handle each chunk of the stream
-                function onParse(event) {
-                    if (event.type === 'event') {
-                        try {
-                            const data = JSON.parse(event.data);
-                            // Extract the content from the delta
-                            const text = data.choices[0]?.delta?.content || '';
-                            if (text) {
-                                controller.enqueue(encoder.encode(text));
-                            }
-                        } catch (e) {
-                            console.error('Error parsing SSE message:', e);
+                const parser = createParser({
+                    onEvent(event) {
+                        if (event.type === 'event') {
+                            try {
+                                console.log(event);
+                                const data = JSON.parse(event.data);
+                                const text = data.choices[0]?.delta?.content || '';
+                                if (text) {
+                                    controller.enqueue(encoder.encode(text));
+                                }
+                            } catch (e) {/* Ignore parse errors */ }
                         }
                     }
+                });
+                for await (const chunk of response.data) {
+                    parser.feed(chunk.toString());
                 }
-
-                // Create parser from eventsource-parser
-                const parser = createParser(onParse);
-                
-                // Process the response body
-                const reader = response.body.getReader();
-                let done, value;
-                while (!done) {
-                    ({ value, done } = await reader.read());
-                    if (done) {
-                        break;
-                    }
-                    const chunk = decoder.decode(value);
-                    parser.feed(chunk);
-                }
-                
-                // Close the stream when done
                 controller.close();
             }
         });
-
         return new Response(stream);
     }
 }
+
 
 // Create chat sessions with different configurations
 export const chatSession = new ChatSession(generationConfig);
