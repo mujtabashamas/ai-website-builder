@@ -10,88 +10,52 @@ export default {
     `,
 
     CODE_GEN_PROMPT: dedent`
-    Generate a fully structured React project using Vite.  
-Ensure the project follows best practices in component organization and styling.  
+    Generate a fully structured Next.js app directory project using TypeScript and Tailwind CSS.
+Ensure the project follows best practices in component organization and styling for Next.js 13+ (app router).
 
-**Project Requirements:**  
-- Use **React** as the framework.  
-- Add as many functional features as possible.  
-- **Do not create an App.jsx file. Use App.js instead** and modify it accordingly.  
-- Use **Tailwind CSS** for styling and create a modern, visually appealing UI.  
-- Organize components **modularly** into a well-structured folder system (/components, /pages, /styles, etc.).  
-- Include reusable components like **buttons, cards, and forms** where applicable.  
-- Use **lucide-react** icons if needed for UI enhancement.  
-- Do not create a src folder.
+**Project Requirements:**
+- Use **Next.js** as the framework with the **app directory**.
+- Use **TypeScript** (.tsx, .ts files only).
+- Use **Tailwind CSS** for styling and create a modern, visually appealing UI.
+- Organize components in **/components**, utilities in **/lib**, and global styles in **/app/globals.css**.
+- Main entry point should be **/app/page.tsx**. Add a minimal **/app/layout.tsx** if missing.
+- Include reusable components like **buttons, cards, and forms** where applicable.
+- Use **lucide-react** icons if needed for UI enhancement.
+- Do not use Vite, CRA, or src folder.
 
-**Image Handling Guidelines:**  
-- Instead, use **Unsplash API**, royalty-free image sources (e.g., Pexels, Pixabay).
-- Do not use images from unsplash.com.
-- use images from the internet.
+**Image Handling Guidelines:**
+- Use royalty-free image sources (e.g., Pexels, Pixabay) or placeholder images from https://archive.org/download/.
 
-**Dependencies to Use:**  
-- "postcss": "^8"  
-- "tailwindcss": "^3.4.1"  
-- "autoprefixer": "^10.0.0"  
-- "uuid4": "^2.0.3"  
-- "tailwind-merge": "^2.4.0"  
-- "tailwindcss-animate": "^1.0.7"  
-- "lucide-react": "latest"  
-- "react-router-dom": "latest"  
-- "firebase": "^11.1.0"  
-- "@google/generative-ai": "^0.21.0"  
-- "@headlessui/react": "^1.7.17"  
-- "framer-motion": "^10.0.0"  
-- "react-icons": "^5.0.0"  
-- "uuid": "^11.1.0"  
-- "@mui/material": "^6.4.6"  
+**Dependencies to Use:**
+- "next": "^14.0.0"
+- "react": "^18.0.0"
+- "react-dom": "^18.0.0"
+- "tailwindcss": "^3.4.1"
+- "postcss": "^8"
+- "autoprefixer": "^10.0.0"
+- "lucide-react": "latest"
+- "@headlessui/react": "^1.7.17"
+- "framer-motion": "^10.0.0"
+- "tailwind-merge": "^2.4.0"
+- "tailwindcss-animate": "^1.0.7"
 
-    Return the response in JSON format with the following schema:
-    {
-      "projectTitle": "",
-      "explanation": "",
-      "files": {
-        "/App.js": {
-          "code": ""
-        },
-        ...
-      },
-      "generatedFiles": []
-    }
+Return the response in JSON format with the following schema:
+{
+  "projectTitle": "",
+  "explanation": "",
+  "files": {
+    "/app/page.tsx": { "code": "" },
+    ...
+  },
+  "generatedFiles": []
+}
 
-    Here's the reformatted and improved version of your prompt:
-
-    Generate a programming code structure for a React project using Vite.
-    Do not create a App.jsx file. There is a App.js file in the project structure, rewrite it.
-    Use Tailwind css for styling. Create a well Designed UI. 
-
-    Return the response in JSON format with the following schema:
-
-    {
-      "projectTitle": "",
-      "explanation": "",
-      "files": {
-        "/App.js": {
-          "code": ""
-        },
-        ...
-      },
-      "generatedFiles": []
-    }
-
-    Ensure the files field contains all the created files, and the generatedFiles field contains the list of generated files:{
-    "/App.js": {
-      "code": "import React from 'react';\n\nfunction App() {\n  return (\n    <div>\n      <h1>Hello World</h1>\n    </div>\n  );\n}\n\nexport default App;\n"
-    }
-    }
-    
-    Also updaate the Package.json file with the needed dependencies.
-
-    Additionally, include an explanation of the project's structure, purpose, and additional instructions:
-    - For placeholder images use appropirate URLs.
-    - Add external images if needed.
-    - The lucide-react library is also available to be imported IF NECESSARY.
-    - Update the package.json file with the required dependencies.
-    - Do not use backend or database related.
+Additionally, include an explanation of the project's structure, purpose, and additional instructions:
+- For placeholder images use appropriate URLs.
+- Add external images if needed.
+- The lucide-react library is also available to be imported IF NECESSARY.
+- Update the package.json file with the required dependencies.
+- Do not use backend or database related.
     `,
     
     ENHANCE_PROMPT_RULES: dedent`

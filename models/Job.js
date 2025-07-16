@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const JobSchema = new mongoose.Schema({
   _id: { type: String, required: true },
-  status: { type: String, enum: ['pending', 'done', 'error'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'processing', 'done', 'error'], default: 'pending' },
   prompt: { type: mongoose.Schema.Types.Mixed },
   result: { type: mongoose.Schema.Types.Mixed, default: null },
   error: { type: mongoose.Schema.Types.Mixed, default: null },

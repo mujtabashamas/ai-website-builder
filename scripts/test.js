@@ -1,32 +1,29 @@
 import { GenAiCode } from "./AiModel.js";
 
-(async () => {
-  const prompt = "Create a landing page for a web3 product";
+let full = "";
+export async function runAiStreamingDemo(prompt) {
   try {
-    const response = await GenAiCode.streamMessage(prompt);
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let done, value;
-    let data = ""; // <--- This will accumulate the streamed text
-
-    while (true) {
-      ({ done, value } = await reader.read());
-      if (done) break;
-      const chunk = decoder.decode(value);
-      process.stdout.write(chunk); // Streamed output
-      data += chunk; // <--- Collecting the streamed data
-      console.log(chunk)
-    }
-
-    console.log("\n--- Streaming complete ---");
-    console.log(data);
-    // Now you can use `data` as a string containing the full streamed response
-    // For example, parse as JSON if the response is JSON:
-    // const parsed = JSON.parse(data);
-    // console.log(parsed);
-
+    await GenAiCode.streamMessage(prompt, {
+      onToken: (t) => {
+        full += t;
+        // push partials to your client with a TransformStream,
+        // SSE, websockets, etc. (depends on your app)
+        process.stdout.write(t); // Use process.stdout.write for streaming output without newlines
+      },
+      onDone: (completeText) => {
+        console.log("\n--- Stream finished ---");
+        console.log("Complete response:", completeText);
+      }
+    });
+    return full;
   } catch (e) {
-    console.error(e);
+    console.error("Error in streaming demo:", e);
+    throw e;
   }
-  process.exit(0);
-})();
+}
+
+
+runAiStreamingDemo("Create a landing page for a web3 product").then(() => {
+  console.log(`full : ${full}`)
+  process.exit(0)
+});
