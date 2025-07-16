@@ -11,7 +11,7 @@ const generationConfig = {
 
 // Configuration for code generation
 const CodeGenerationConfig = {
-    model: "v0-1.5-lg", // Updated to use the large model for advanced reasoning and code generation
+    model: "v0-1.5-md", // Updated to use the large model for advanced reasoning and code generation
     temperature: 0.8, // Slightly lower temperature for more focused outputs
     top_p: 0.95,
     max_tokens: 256000,

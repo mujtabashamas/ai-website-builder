@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { createParser } from 'eventsource-parser';
 
+const V0_API_KEY = ""
+
 // Configuration for general chat
 const generationConfig = {
     model: "v0-1.5-md", // Model for everyday tasks and UI generation
@@ -14,7 +16,7 @@ const CodeGenerationConfig = {
     model: "v0-1.5-lg", // Updated to use the large model for advanced reasoning and code generation
     temperature: 0.8, // Slightly lower temperature for more focused outputs
     top_p: 0.95,
-    max_tokens: 256000,
+    max_tokens: 32000,
     response_format: { type: "json_object" }
 };
 
@@ -32,7 +34,7 @@ class ChatSession {
     constructor(config, history = []) {
         this.config = config;
         this.history = history;
-        this.apiKey = process.env.V0_API_KEY || ''; // API key should be set in environment variables
+        this.apiKey = V0_API_KEY || ''; // API key should be set in environment variables
         this.apiUrl = 'https://api.v0.dev/v1/chat/completions';
     }
 
@@ -76,7 +78,7 @@ class ChatSession {
                 payload.tool_choice = options.tool_choice;
             }
 
-            console.log(payload);
+            // console.log(payload);
 
             // Make the API request using axios
             const response = await axios({
