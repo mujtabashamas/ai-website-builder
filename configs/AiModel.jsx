@@ -11,10 +11,10 @@ const generationConfig = {
 
 // Configuration for code generation
 const CodeGenerationConfig = {
-    model: "v0-1.5-md", // Updated to use the large model for advanced reasoning and code generation
+    model: "v0-1.5-lg", // Updated to use the large model for advanced reasoning and code generation
     temperature: 0.8, // Slightly lower temperature for more focused outputs
     top_p: 0.95,
-    max_tokens: 256000,
+    max_tokens: 32000,
     response_format: { type: "json_object" }
 };
 
@@ -228,7 +228,7 @@ export const chatSession = new ChatSession(generationConfig);
 export const GenAiCode = new ChatSession(CodeGenerationConfig, [
     {
         role: "system",
-        content: "You are an expert Next.js developer with advanced Tailwind CSS skills. Generate code based on the user's request in proper JSON format. Follow these guidelines for all UI components:\n\n1. Use sophisticated Tailwind CSS designs with advanced utility classes\n2. Implement responsive designs that work on mobile, tablet, and desktop\n3. Use gradients, shadows, animations, and transitions for visual appeal\n4. Include hover/focus states and interactive elements\n5. Use modern UI patterns like cards, modals, dropdowns when appropriate\n6. Implement proper spacing, typography hierarchy, and color theory\n7. Use Tailwind's dark mode utilities when appropriate\n8. Incorporate micro-interactions and subtle animations\n9. Use container queries and modern layout techniques\n10. Ensure accessibility with proper ARIA attributes and keyboard navigation\n11. Use Next.js 13+ app directory structure with TypeScript and Tailwind CSS."
+        content: "You are an expert Next.js developer with advanced Tailwind CSS skills. You must return ONLY valid JSON files as output, with no extra explanation, commentary, or text—just the JSON object. Generate code based on the user's request in strict JSON format. Follow these guidelines for all UI components:\n\n1. Use sophisticated Tailwind CSS designs with advanced utility classes\n2. Implement responsive designs that work on mobile, tablet, and desktop\n3. Use gradients, shadows, animations, and transitions for visual appeal\n4. Include hover/focus states and interactive elements\n5. Use modern UI patterns like cards, modals, dropdowns when appropriate\n6. Implement proper spacing, typography hierarchy, and color theory\n7. Use Tailwind's dark mode utilities when appropriate\n8. Incorporate micro-interactions and subtle animations\n9. Use container queries and modern layout techniques\n10. Ensure accessibility with proper ARIA attributes and keyboard navigation\n11. Use Next.js 13+ app directory structure with TypeScript and Tailwind CSS."
     },
     {
         role: "user",

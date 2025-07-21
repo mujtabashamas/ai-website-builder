@@ -75,62 +75,61 @@ export async function POST(req) {
 
 // Helper function to try parsing JSON
 function tryParseJson(text) {
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    // Try to extract JSON from markdown code blocks
-    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    if (jsonMatch && jsonMatch[1]) {
-      try {
-        return JSON.parse(jsonMatch[1].trim());
-      } catch (extractError) {
-        console.log("JSON extraction error:", extractError);
-      }
+  // Remove leading/trailing whitespace
+  let cleaned = text.trim();
+  // Remove leading 'json' token if present
+  if (cleaned.startsWith('json')) {
+    cleaned = cleaned.slice(4).trim();
+  }
+  // Handle markdown code block (```json ... ``` or ``` ... ```)
+  if (cleaned.startsWith('```')) {
+    // Remove the opening triple backticks and optional 'json'
+    cleaned = cleaned.replace(/^```json|^```/, '').trim();
+    // Remove the closing triple backticks if present
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.slice(0, -3).trim();
     }
-    return text;
+  }
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (typeof parsed === 'object' && parsed !== null) {
+      return parsed;
+    }
+    return null;
+  } catch (e) {
+    return null;
   }
 }
 
 // Background processing function
 // Helper function to check if a response is complete based on its structure
 function isResponseComplete(response) {
-  // If it's not an object, it's definitely not complete
-  if (typeof response !== 'object' || response === null) {
-    return false;
+  // Must be a non-null object
+  if (typeof response !== 'object' || response === null) return false;
+
+  // projectTitle: non-empty string
+  if (typeof response.projectTitle !== 'string' || !response.projectTitle.trim()) return false;
+
+  // explanation: non-empty string
+  if (typeof response.explanation !== 'string' || !response.explanation.trim()) return false;
+
+  // files: non-empty object, each value must have a non-empty 'code' string
+  if (!response.files || typeof response.files !== 'object' || Array.isArray(response.files)) return false;
+  const fileKeys = Object.keys(response.files);
+  if (fileKeys.length === 0) return false;
+  for (const key of fileKeys) {
+    if (!response.files[key] || typeof response.files[key].code !== 'string' || !response.files[key].code.trim()) {
+      return false;
+    }
   }
 
-  // Check for required fields in the response structure
-  // For the AI website builder, we expect projectTitle, files, and generatedFiles
-  if (!response.projectTitle || !response.files || !response.generatedFiles) {
-    return false;
+  // generatedFiles: non-empty array of strings, each must be a key in files
+  if (!Array.isArray(response.generatedFiles) || response.generatedFiles.length === 0) return false;
+  for (const file of response.generatedFiles) {
+    if (typeof file !== 'string' || !fileKeys.includes(file)) return false;
   }
 
-  // Check if files object has content
-  if (Object.keys(response.files).length === 0) {
-    return false;
-  }
-
-  // Check if generatedFiles array has entries
-  if (!Array.isArray(response.generatedFiles) || response.generatedFiles.length === 0) {
-    return false;
-  }
-
-  // Check if the last file in the files object has code
-  const lastFilePath = Object.keys(response.files).pop();
-  if (!lastFilePath || !response.files[lastFilePath].code) {
-    return false;
-  }
-
-  // Check if the last file in generatedFiles is also in the files object
-  // This helps ensure we have all the files that were supposed to be generated
-  const lastGeneratedFile = response.generatedFiles[response.generatedFiles.length - 1];
-  const allFilePaths = Object.keys(response.files).map(path => path.toLowerCase());
-  if (!allFilePaths.some(path => lastGeneratedFile.toLowerCase().includes(path.toLowerCase()) ||
-    path.toLowerCase().includes(lastGeneratedFile.toLowerCase()))) {
-    return false;
-  }
-
-  // If we've passed all checks, the response appears to be complete
+  // If all checks pass, the response is complete
   return true;
 }
 
