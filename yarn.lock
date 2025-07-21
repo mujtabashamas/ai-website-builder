@@ -745,6 +745,11 @@
   resolved "https://registry.npmjs.org/@react-hook/passive-layout-effect/-/passive-layout-effect-1.2.1.tgz"
   integrity sha512-IwEphTD75liO8g+6taS+4oqz+nnroocNfWVHWz7j+N+ZO2vYrc6PV1q7GQhuahL0IOR7JccFTsFKQ/mb6iZWAg==
 
+"@stackblitz/sdk@^1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@stackblitz/sdk/-/sdk-1.11.0.tgz#ba30c837decca221ce8d605ff768a774c0f92f89"
+  integrity sha512-DFQGANNkEZRzFk1/rDP6TcFdM82ycHE+zfl9C/M/jXlH68jiqHWHFMQURLELoD8koxvu/eW5uhg94NSAZlYrUQ==
+
 "@stitches/core@^1.2.6":
   version "1.2.8"
   resolved "https://registry.npmjs.org/@stitches/core/-/core-1.2.8.tgz"

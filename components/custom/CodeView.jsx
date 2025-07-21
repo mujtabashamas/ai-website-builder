@@ -184,13 +184,13 @@ function CodeView() {
             </div>
             <SandpackProvider
                 files={files}
-                template="react"
+                template="nextjs"
                 theme={'dark'}
                 customSetup={{
                     dependencies: {
                         ...Lookup.DEPENDANCY
                     },
-                    entry: '/index.js'
+                    entry: '/app/page.tsx'
                 }}
                 options={{
                     externalResources: ['https://cdn.tailwindcss.com'],
