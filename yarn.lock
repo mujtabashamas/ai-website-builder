@@ -14,6 +14,11 @@
   dependencies:
     regenerator-runtime "^0.14.0"
 
+"@bufbuild/protobuf@^2.2.2":
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-2.6.2.tgz#2a345fce198f8858c7bc807ed7f0813d163344eb"
+  integrity sha512-vLu7SRY84CV/Dd+NUdgtidn2hS5hSMUC1vDBY0VcviTdgRYkU43vIz3vIFbmx14cX1r+mM7WjzE5Fl1fGEM0RQ==
+
 "@codemirror/autocomplete@^6.0.0", "@codemirror/autocomplete@^6.4.0":
   version "6.18.4"
   resolved "https://registry.npmjs.org/@codemirror/autocomplete/-/autocomplete-6.18.4.tgz"
@@ -154,6 +159,23 @@
     lz-string "^1.4.4"
     react-devtools-inline "4.4.0"
     react-is "^17.0.2"
+
+"@connectrpc/connect-web@2.0.0-rc.3":
+  version "2.0.0-rc.3"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect-web/-/connect-web-2.0.0-rc.3.tgz#4dd9c18b8105cb7395077808c4967a9eafdffe76"
+  integrity sha512-w88P8Lsn5CCsA7MFRl2e6oLY4J/5toiNtJns/YJrlyQaWOy3RO8pDgkz+iIkG98RPMhj2thuBvsd3Cn4DKKCkw==
+
+"@connectrpc/connect@2.0.0-rc.3":
+  version "2.0.0-rc.3"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect/-/connect-2.0.0-rc.3.tgz#f75cd1bd132dd983ff4f16432aaf5309ee673662"
+  integrity sha512-ARBt64yEyKbanyRETTjcjJuHr2YXorzQo0etyS5+P6oSeW8xEuzajA9g+zDnMcj1hlX2dQE93foIWQGfpru7gQ==
+
+"@e2b/code-interpreter@^1.5.1":
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@e2b/code-interpreter/-/code-interpreter-1.5.1.tgz#3c3b299d4a8c2ef56b231e744c0af9f12de6c2f9"
+  integrity sha512-mkyKjAW2KN5Yt0R1I+1lbH3lo+W/g/1+C2lnwlitXk5wqi/g94SEO41XKdmDf5WWpKG3mnxWDR5d6S/lyjmMEw==
+  dependencies:
+    e2b "^1.4.0"
 
 "@emnapi/runtime@^1.2.0":
   version "1.3.1"
@@ -1077,6 +1099,11 @@ commander@^4.0.0:
   resolved "https://registry.npmjs.org/commander/-/commander-4.1.1.tgz"
   integrity sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==
 
+compare-versions@^6.1.0:
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/compare-versions/-/compare-versions-6.1.1.tgz#7af3cc1099ba37d244b3145a9af5201b629148a9"
+  integrity sha512-4hm4VPpIecmlg59CHXnRDnqGplJFrbLG4aFEl5vl6cK1u76ws3LLvX7ikFnTDl5vo39sjWD6AaDPYodJp/NNHg==
+
 convex@^1.25.4:
   version "1.25.4"
   resolved "https://registry.yarnpkg.com/convex/-/convex-1.25.4.tgz#55748fa86b020069ed7e1ac798b24c3d733cdd21"
@@ -1186,6 +1213,23 @@ dotenv@^16.0.3:
   version "16.4.7"
   resolved "https://registry.npmjs.org/dotenv/-/dotenv-16.4.7.tgz"
   integrity sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==
+
+dotenv@^17.2.1:
+  version "17.2.1"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-17.2.1.tgz#6f32e10faf014883515538dc922a0fb8765d9b32"
+  integrity sha512-kQhDYKZecqnM0fCnzI5eIv5L4cAe/iRI+HqMbO/hbRdTAeXDG+M9FjipUxNfbARuEg4iHIbhnhs78BCHNbSxEQ==
+
+e2b@^1.4.0:
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/e2b/-/e2b-1.9.0.tgz#b1d60522b66231db70a602d6ecb8bea6ef148536"
+  integrity sha512-MM3RhWW7YENYocTy20BvKVcn8li/FxkDrHINS7tmz00ffl1ZavQTRxCI9Sl8ofeRg+HVMlqO4W8LJ+ij9VTZPg==
+  dependencies:
+    "@bufbuild/protobuf" "^2.2.2"
+    "@connectrpc/connect" "2.0.0-rc.3"
+    "@connectrpc/connect-web" "2.0.0-rc.3"
+    compare-versions "^6.1.0"
+    openapi-fetch "^0.9.7"
+    platform "^1.3.6"
 
 eastasianwidth@^0.2.0:
   version "0.2.0"
@@ -2075,6 +2119,18 @@ openai@^5.9.0:
   resolved "https://registry.npmjs.org/openai/-/openai-5.9.0.tgz"
   integrity sha512-cmLC0pfqLLhBGxE4aZPyRPjydgYCncppV2ClQkKmW79hNjCvmzkfhz8rN5/YVDmjVQlFV+UsF1JIuNjNgeagyQ==
 
+openapi-fetch@^0.9.7:
+  version "0.9.8"
+  resolved "https://registry.yarnpkg.com/openapi-fetch/-/openapi-fetch-0.9.8.tgz#177cd9d1c9a4f42ac6aec7adf075ac9638e1fbf5"
+  integrity sha512-zM6elH0EZStD/gSiNlcPrzXcVQ/pZo3BDvC6CDwRDUt1dDzxlshpmQnpD6cZaJ39THaSmwVCxxRrPKNM1hHrDg==
+  dependencies:
+    openapi-typescript-helpers "^0.0.8"
+
+openapi-typescript-helpers@^0.0.8:
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/openapi-typescript-helpers/-/openapi-typescript-helpers-0.0.8.tgz#460f395362cc16e4a5de56264b7b1c5a03746e35"
+  integrity sha512-1eNjQtbfNi5Z/kFhagDIaIRj6qqDzhjNJKz8cmMW0CVdGwT6e1GLbAfgI0d28VTJa1A8jz82jm/4dG8qNoNS8g==
+
 outvariant@1.4.0, outvariant@^1.3.0, outvariant@^1.4.0:
   version "1.4.0"
   resolved "https://registry.npmjs.org/outvariant/-/outvariant-1.4.0.tgz"
@@ -2140,6 +2196,11 @@ pirates@^4.0.1:
   version "4.0.6"
   resolved "https://registry.npmjs.org/pirates/-/pirates-4.0.6.tgz"
   integrity sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==
+
+platform@^1.3.6:
+  version "1.3.6"
+  resolved "https://registry.yarnpkg.com/platform/-/platform-1.3.6.tgz#48b4ce983164b209c2d45a107adb31f473a6e7a7"
+  integrity sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg==
 
 postcss-import@^15.1.0:
   version "15.1.0"
