@@ -1,8 +1,6 @@
 import axios from 'axios';
 import { createParser } from 'eventsource-parser';
 
-const V0_API_KEY = ""
-
 // Configuration for general chat
 const generationConfig = {
     model: "v0-1.5-md", // Model for everyday tasks and UI generation
@@ -34,7 +32,7 @@ class ChatSession {
     constructor(config, history = []) {
         this.config = config;
         this.history = history;
-        this.apiKey = V0_API_KEY || ''; // API key should be set in environment variables
+        this.apiKey = 'v1:JrFXTArn07QTGAcIWTyDAIko:Rj1kTPLLjeyPRy97IgdV5HGo'; // API key should be set in environment variables
         this.apiUrl = 'https://api.v0.dev/v1/chat/completions';
     }
 
@@ -139,10 +137,34 @@ class ChatSession {
         // console.log(response);
         // console.log(response.data);
         console.log("starting")
+
+        // Set up timeout handling
+        let timeoutId;
+        let lastEventTime = Date.now();
+        const TIMEOUT_MS = 15000; // 15 seconds timeout
+
+        // Function to reset the timeout
+        const resetTimeout = () => {
+            lastEventTime = Date.now();
+            if (timeoutId) clearTimeout(timeoutId);
+
+            timeoutId = setTimeout(() => {
+                console.log(`No events received in ${TIMEOUT_MS / 1000} seconds, ending stream`);
+                if (onDone) onDone(collected);
+                // Add to history
+                this.history.push({ role: "assistant", content: collected });
+                // Force end the stream
+                response.data.destroy();
+            }, TIMEOUT_MS);
+        };
+
         // 2. Parse the incoming stream
         const decoder = new TextDecoder();
         const parser = createParser({
             onEvent: (event) => {
+                // Reset timeout on each event
+                resetTimeout();
+
                 // console.log(event.type);
                 // console.log(event.data);
                 // if (event.type !== "event") return;               // ignore comments
@@ -154,9 +176,12 @@ class ChatSession {
                 // }
                 try {
                     const json = JSON.parse(event.data);
-                    const finish = json.choices[0].finish_reason || false;
+                    const finish = json.choices[0]?.finish_reason || false;
                     if (finish) {
                         console.log(`Finish Reason: ${finish}`);
+                        if (onDone) onDone(collected);
+                        this.history.push({ role: "assistant", content: collected });
+                        clearTimeout(timeoutId);
                         return;
                     }
                     const text = json.choices?.[0]?.delta?.content ?? "";
@@ -173,6 +198,9 @@ class ChatSession {
         });
 
         let collected = "";
+        // Start the initial timeout
+        resetTimeout();
+
         // Process the axios stream response
         response.data.on('data', (chunk) => {
             parser.feed(decoder.decode(chunk, { stream: true }));
@@ -180,8 +208,15 @@ class ChatSession {
 
         // Return a promise that resolves when the stream ends
         return new Promise((resolve, reject) => {
-            response.data.on('end', () => resolve());
-            response.data.on('error', (err) => reject(err));
+            response.data.on('end', () => {
+                clearTimeout(timeoutId);
+                if (collected && onDone) onDone(collected);
+                resolve();
+            });
+            response.data.on('error', (err) => {
+                clearTimeout(timeoutId);
+                reject(err);
+            });
         });
     }
 }
@@ -193,17 +228,81 @@ export const chatSession = new ChatSession(generationConfig);
 export const GenAiCode = new ChatSession(CodeGenerationConfig, [
     {
         role: "system",
-        content: "You are an expert Next.js developer with advanced Tailwind CSS skills. Generate code based on the user's request in proper JSON format. Follow these guidelines for all UI components:\n\n1. Use sophisticated Tailwind CSS designs with advanced utility classes\n2. Implement responsive designs that work on mobile, tablet, and desktop\n3. Use gradients, shadows, animations, and transitions for visual appeal\n4. Include hover/focus states and interactive elements\n5. Use modern UI patterns like cards, modals, dropdowns when appropriate\n6. Implement proper spacing, typography hierarchy, and color theory\n7. Use Tailwind's dark mode utilities when appropriate\n8. Incorporate micro-interactions and subtle animations\n9. Use container queries and modern layout techniques\n10. Ensure accessibility with proper ARIA attributes and keyboard navigation\n11. Use Next.js 13+ app directory structure with TypeScript and Tailwind CSS."
+        content: `
+  You are an expert Next.js (14/15) + TypeScript + Tailwind CSS engineer.
+  You MUST return **only one valid JSON object** – no prose, no markdown fences.
+  
+  **Hard requirements:**
+  1) Always include these files (with full, working code) inside "files": 
+     - /package.json  (with scripts: dev, build, start, lint)
+     - /tsconfig.json (must set: { "compilerOptions": { "baseUrl": ".", "paths": { "@/*": ["./*"] } } })
+     - /next.config.mjs
+     - /postcss.config.mjs (or .js)
+     - /tailwind.config.ts (or .js) with content paths: ./app/**/*.{ts,tsx}, ./components/**/*.{ts,tsx}, ./lib/**/*.{ts,tsx}
+     - /app/globals.css  (must include @tailwind base; @tailwind components; @tailwind utilities;)
+     - /lib/utils.ts exporting: cn(...inputs) using clsx + tailwind-merge
+     - /app/layout.tsx
+     - /app/page.tsx
+     - /.eslintrc.json
+     - /.gitignore
+     - /README.md
+  
+  2) Dependencies in /package.json must include (at minimum):
+     "next", "react", "react-dom", "tailwindcss", "postcss", "autoprefixer",
+     "clsx", "tailwind-merge", "lucide-react"
+     (plus any other deps you actually use, e.g. radix-ui, tailwindcss-animate, etc.)
+  
+  3) Tech rules:
+     - Next.js **app directory**, **TypeScript**, **Tailwind CSS**
+     - Use the **@/** path alias consistently
+     - Organize UI in /components, utilities in /lib
+     - Dark mode via Tailwind (class strategy) if theme switching is used
+  
+  4) **Output schema (strict)**:
+  {
+    "projectTitle": "",
+    "explanation": "",
+    "files": {
+      "/path/file.ext": { "code": "..." }
+    },
+    "generatedFiles": [ "/path/file.ext", ... ]
+  }
+  
+  5) Never include anything outside that JSON. If you forgot any required file, regenerate internally and output the full, correct JSON only.
+  `
     },
     {
         role: "user",
-        content: "Create a modern, visually stunning to-do app: Generate a Project in Next.js (app directory, TypeScript, Tailwind CSS) with sophisticated UI. Create multiple components, organizing them in a folder structure.\n\nReturn the response in JSON format with the following schema:\n{\n  \"projectTitle\": \"\",\n  \"explanation\": \"\",\n  \"files\": {\n    \"/app/page.tsx\": { \"code\": \"\" },\n    ...\n  },\n  \"generatedFiles\": []\n}\n\nGenerate a fully structured Next.js 13+ app directory project using TypeScript and Tailwind CSS.\n- Use /app/page.tsx as the main entry point.\n- Add a minimal /app/layout.tsx if missing.\n- Organize components in /components, utilities in /lib, and global styles in /app/globals.css.\n- Include reusable components like buttons, cards, and forms where applicable.\n- Use lucide-react icons if needed for UI enhancement.\n- Do not use Vite, CRA, or src folder.\n\nEnsure the files field contains all the created files, and the generatedFiles field contains the list of generated files.\n\nAdditionally, include an explanation of the project's structure, purpose, and additional instructions:\n- For placeholder images, please use https://archive.org/download/\n- Add Emoji icons whenever needed to give a good user experience\n- The lucide-react library is also available to be imported for modern icons and UI elements\n- Include a theme switcher for light/dark mode if appropriate"
+        content: `
+  Create a modern, visually stunning to-do app.
+  
+  **Return ONLY valid JSON** with this schema:
+  {
+    "projectTitle": "",
+    "explanation": "",
+    "files": {
+      "/app/page.tsx": { "code": "" }
     },
-    {
-        role: "assistant",
-        content: "{\n  \"projectTitle\": \"Next.js To-Do App\",\n  \"explanation\": \"This project creates a modern to-do application using Next.js (app directory, TypeScript) and Tailwind CSS. The application is structured with components organized into a dedicated 'components' folder, and global styles in /app/globals.css. The application allows users to add tasks, mark them as complete, and remove them. Emoji icons are included to enhance the user experience, and lucide-react icons can be used for modern UI elements. Placeholder images can be used from https://archive.org/download/ if needed.\",\n  \"files\": {\n    \"/app/page.tsx\": {\n      \"code\": \"import TodoList from '../components/TodoList';\\nimport AddTodo from '../components/AddTodo';\\n\\nexport default function Page() {\\n  return (\\n    <main className=\\\"flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8\\\">\\n      <h1 className=\\\"text-3xl font-bold mb-4\\\">To-Do List 📝</h1>\\n      <div className=\\\"bg-white p-6 rounded-md shadow-md w-full max-w-md\\\">\\n          <AddTodo />\\n          <TodoList />\\n      </div>\\n    </main>\\n  );\\n}\"\n    },\n    \"/app/layout.tsx\": {\n      \"code\": \"import './globals.css';\\nimport type { ReactNode } from 'react';\\n\\nexport default function RootLayout({ children }: { children: ReactNode }) {\\n  return (\\n    <html lang=\\\"en\\\">\\n      <body>{children}</body>\\n    </html>\\n  );\\n}\"\n    },\n    \"/app/globals.css\": {\n      \"code\": \"@tailwind base;\\n@tailwind components;\\n@tailwind utilities;\"\n    },\n    \"/components/TodoList.tsx\": {\n      \"code\": \"import React, { useState } from 'react';\\n\\ntype Todo = { id: number; text: string; completed: boolean };\\n\\nexport default function TodoList() {\\n  const [todos, setTodos] = useState<Todo[]>([]);\\n\\n  const toggleComplete = (id: number) => {\\n    setTodos(todos.map(todo =>\\n      todo.id === id ? { ...todo, completed: !todo.completed } : todo\\n    ));\\n  };\\n\\n  const removeTodo = (id: number) => {\\n    setTodos(todos.filter(todo => todo.id !== id));\\n  };\\n\\n  return (\\n    <ul className=\\\"mt-4\\\">\\n      {todos.map(todo => (\\n        <li key={todo.id} className=\\\"flex justify-between items-center py-2 border-b border-gray-200\\\">\\n          <span onClick={() => toggleComplete(todo.id)} className={\\\`cursor-pointer flex-1 \\\${todo.completed ? 'line-through text-gray-500' : ''}\\\`}>{todo.text}</span>\\n          <button onClick={() => removeTodo(todo.id)} className=\\\"ml-2 text-red-500 hover:text-red-700 focus:outline-none\\\">❌</button>\\n        </li>\\n      ))}\\n    </ul>\\n  );\\n}\"\n    },\n    \"/components/AddTodo.tsx\": {\n      \"code\": \"import React, { useState } from 'react';\\n\\nexport default function AddTodo() {\\n  const [text, setText] = useState('');\\n  const [todos, setTodos] = useState(() => {\\n    if (typeof window !== 'undefined') {\\n      const savedTodos = localStorage.getItem('todos');\\n      return savedTodos ? JSON.parse(savedTodos) : [];\\n    }\\n    return [];\\n  });\\n\\n  const handleSubmit = (e: React.FormEvent) => {\\n    e.preventDefault();\\n    if(text.trim() === '') return;\\n    const newTodo = { id: Date.now(), text: text, completed: false };\\n    setTodos([...todos, newTodo]);\\n    setText('');\\n  };\\n\\n  return (\\n    <form onSubmit={handleSubmit} className=\\\"flex\\\">\\n      <input\\n        type=\\\"text\\\"\\n        placeholder=\\\"Add a todo...\\\"        value={text}\\n        onChange={(e) => setText(e.target.value)}\\n        className=\\\"border p-2 rounded-l-md flex-1 focus:outline-none focus:ring focus:border-blue-300\\\"\\n      />\\n      <button type=\\\"submit\\\" className=\\\"bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none\\\">➕</button>\\n    </form>\\n  );\\n}\"\n    }\n  },\n  \"generatedFiles\": [\n      \"/app/page.tsx\",\n      \"/app/layout.tsx\",\n      \"/app/globals.css\",\n      \"/components/TodoList.tsx\",\n      \"/components/AddTodo.tsx\"\n  ]\n}"
+    "generatedFiles": []
+  }
+  
+  **Must include all mandatory files** listed in the system message:
+  - /package.json, /tsconfig.json, /next.config.mjs, /postcss.config.mjs, /tailwind.config.ts|js,
+    /app/globals.css, /lib/utils.ts (cn helper), /app/layout.tsx, /app/page.tsx, /.eslintrc.json,
+    /.gitignore, /README.md
+  
+  **Style & UX:**
+  - Sophisticated Tailwind UI (responsive, gradients, shadows, animations, hover/focus states, dark mode)
+  - Use lucide-react icons when helpful
+  - Add a theme switcher if appropriate
+  - Use emojis where it improves UX
+  - Placeholder images from https://archive.org/download/
+  
+  Return the **complete code** for every file in "files", and list them again in "generatedFiles".
+  `
     }
 ]);
+
 
 // Create enhance prompt session
 export const enhancePromptSession = new ChatSession(EnhancePromptConfig, [

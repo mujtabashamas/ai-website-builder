@@ -1,39 +1,28 @@
 "use client"
 import { MessagesContext } from '@/context/MessagesContext';
 import { ArrowRight, Link, Loader2Icon, Send } from 'lucide-react';
-import { api } from '@/convex/_generated/api';
-import { useConvex } from 'convex/react';
 import { useParams } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
-import { useMutation } from 'convex/react';
-import Prompt from '@/data/Prompt';
+import Prompt from '@/context/Prompt';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import { useJob } from '@/context/JobContext';
 
 function ChatView() {
     const { id } = useParams();
-    const convex = useConvex();
+
     const { messages, setMessages } = useContext(MessagesContext);
     const [userInput, setUserInput] = useState();
     const [loading, setLoading] = useState(false);
-    const UpdateMessages = useMutation(api.workspace.UpdateWorkspace);
-    
+
+
     // Use the shared job context
     const { jobId, status, result, error, isPolling, createJob } = useJob();
 
-    useEffect(() => {
-        id && GetWorkSpaceData();
-    }, [id]);
 
-    const GetWorkSpaceData = async () => {
-        const result = await convex.query(api.workspace.GetWorkspace, {
-            workspaceId: id
-        });
-        setMessages(result?.messages);
-        console.log(result);
-    };
-    
+
+
+
     // Handle direct AI chat responses (not through job polling)
     useEffect(() => {
         if (messages?.length > 0 && !jobId && !isPolling) {
@@ -43,7 +32,7 @@ function ChatView() {
             }
         }
     }, [messages, jobId, isPolling]);
-    
+
     const GetAiResponse = async () => {
         setLoading(true);
         const PROMPT = JSON.stringify(messages) + Prompt.CHAT_PROMPT;
@@ -56,14 +45,9 @@ function ChatView() {
                 role: 'ai',
                 content: result.data.result
             };
-            
+
             setMessages(prev => [...prev, aiResp]);
             const currentMessages = Array.isArray(messages) ? messages : [];
-            
-            await UpdateMessages({
-                messages: [...currentMessages, aiResp],
-                workspaceId: id
-            });
         } catch (error) {
             console.error('Error getting AI response:', error);
             const errorResp = {
@@ -110,11 +94,6 @@ function ChatView() {
             try {
                 // Get the current messages from state to ensure we have the latest
                 const currentMessages = Array.isArray(messages) ? messages : [];
-                
-                UpdateMessages({
-                    messages: [...currentMessages, aiResp],
-                    workspaceId: id
-                });
             } catch (e) {
                 console.error('Error updating workspace messages:', e);
             }
@@ -124,19 +103,15 @@ function ChatView() {
                 role: 'ai',
                 content: `Error: ${error}`
             };
-            
+
             setMessages(prev => [...prev, errorResp]);
             try {
                 const currentMessages = Array.isArray(messages) ? messages : [];
-                UpdateMessages({
-                    messages: [...currentMessages, errorResp],
-                    workspaceId: id
-                });
             } catch (e) {
                 console.error('Error updating workspace messages:', e);
             }
         }
-    }, [status, result, error, id, UpdateMessages]);
+    }, [status, result, error]);
 
     // Submit user prompt and add user message
     const onGenerate = (input) => {
@@ -145,14 +120,14 @@ function ChatView() {
             role: 'user',
             content: input
         };
-        
+
         // Get current messages safely
         const currentMessages = Array.isArray(messages) ? messages : [];
         const updatedMessages = [...currentMessages, userMessage];
-        
+
         setMessages(updatedMessages);
         setUserInput('');
-        
+
         // For code generation, create a job
         const prompt = JSON.stringify(updatedMessages) + Prompt.CHAT_PROMPT;
         createJob(prompt);

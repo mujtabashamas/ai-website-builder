@@ -11,39 +11,29 @@ import {
 import Lookup from '@/data/Lookup';
 import { MessagesContext } from '@/context/MessagesContext';
 import axios from 'axios';
-import Prompt from '@/data/Prompt';
+import Prompt from '@/context/Prompt';
 import { useEffect } from 'react';
 import { useJob } from '@/context/JobContext';
 
-import { useConvex, useMutation } from 'convex/react';
-import { useParams } from 'next/navigation';
-import { api } from '@/convex/_generated/api';
+
 import { Loader2Icon, Download } from 'lucide-react';
 import JSZip from 'jszip';
 
 function CodeView() {
-    const { id } = useParams();
+
     const [activeTab, setActiveTab] = useState('code');
     const [files, setFiles] = useState(Lookup?.DEFAULT_FILE);
 
     const { messages, setMessages } = useContext(MessagesContext);
-    const UpdateFiles = useMutation(api.workspace.UpdateFiles);
-    const convex = useConvex();
+
 
     // Use the shared job context
     const { jobId, status, result, error, isPolling } = useJob();
 
-    useEffect(() => {
-        id && GetFiles();
-    }, [id]);
+
 
     const GetFiles = async () => {
-        const result = await convex.query(api.workspace.GetWorkspace, {
-            workspaceId: id
-        });
-        // Preprocess and validate files before merging
-        const processedFiles = preprocessFiles(result?.fileData || {});
-        const mergedFiles = { ...Lookup.DEFAULT_FILE, ...processedFiles };
+        const mergedFiles = { ...Lookup.DEFAULT_FILE };
         setFiles(mergedFiles);
     };
 
@@ -75,18 +65,11 @@ function CodeView() {
                 const processedAiFiles = preprocessFiles(result.files || {});
                 const mergedFiles = { ...Lookup.DEFAULT_FILE, ...processedAiFiles };
                 setFiles(mergedFiles);
-
-                UpdateFiles({
-                    workspaceId: id,
-                    files: result.files
-                }).catch(err => {
-                    console.error('Error updating files in Convex:', err);
-                });
             }
         } else if (status === 'error') {
             console.error('CodeView: Job error:', error);
         }
-    }, [status, result, error, id, UpdateFiles]);
+    }, [status, result, error]);
 
     const downloadFiles = async () => {
         try {
